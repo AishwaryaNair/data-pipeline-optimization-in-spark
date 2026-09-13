@@ -1,0 +1,35 @@
+{
+  "fact_rows": 20000000,
+  "customer_rows": 100000,
+  "hot_key": 42,
+  "hot_key_fraction": 0.40,
+  "salt_buckets": 8,
+  "query": "full",
+  "status_filter": "COMPLETE",
+  "date_from": "2026-01-01",
+  "date_to": "2026-06-30",
+  "spark_version": "3.5.3",
+  "dataproc_runtime": "2.2.86",
+  "dataproc_tier": "standard",
+  "executor_instances": 2,
+  "executor_cores": 4,
+  "executor_memory": "16g",
+  "driver_cores": 4,
+  "shuffle_partitions": 200,
+  "warmup_runs_per_condition": 1,
+  "measured_runs_per_condition": 5,
+  "conditions": [
+    "uniform/baseline",
+    "uniform/salted",
+    "skewed/baseline",
+    "skewed/salted"
+  ],
+  "seeds": {
+    "skew_selector": 17,
+    "amount": 31,
+    "quantity": 33,
+    "status": 35,
+    "event_date": 37,
+    "dim_attrs": 41
+  }
+}

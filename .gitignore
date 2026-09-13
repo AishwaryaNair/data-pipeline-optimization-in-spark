@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Generated Parquet, Spark scratch and event logs are produced into the GCS
+# bucket, not the repository. These entries guard against a local run pointing
+# its output here.
+data/
+eventlogs/
+results/runs/

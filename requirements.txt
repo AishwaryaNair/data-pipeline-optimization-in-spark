@@ -1,0 +1,12 @@
+# The published results were produced on Dataproc Serverless runtime 2.2.86,
+# which supplies Spark 3.5.3 and its own Python. Nothing in this file was
+# installed on the cluster - these are the LOCAL dependencies only.
+#
+# To submit the benchmark you need none of them: submit_cloud.py uses only the
+# Python standard library plus the gcloud CLI.
+#
+#   python scripts/submit_cloud.py --generate --fact-rows 20000000
+#   python scripts/submit_cloud.py
+
+# --- analysis (analyze.py, report.py) --------------------------------------
+numpy==2.5.3
