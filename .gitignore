@@ -4,9 +4,23 @@ __pycache__/
 .venv/
 venv/
 
+# Credentials. Nothing here needs any of these committed, and this is a public
+# repository against a real cloud project.
+.env
+.env.*
+*.pem
+*.key
+*credentials*.json
+*service-account*.json
+
 # Generated Parquet, Spark scratch and event logs are produced into the GCS
 # bucket, not the repository. These entries guard against a local run pointing
 # its output here.
 data/
 eventlogs/
 results/runs/
+results/batches/
+
+.DS_Store
+.vscode/
+.idea/

@@ -1,11 +1,11 @@
 """Generate the `customers` dimension and the two `sales` fact tables.
 
-    ~/venv-spark/bin/python generate_data.py
+Submitted as a Dataproc batch by submit_cloud.py --generate.
 
-Produces, under ~/spark-bench/data-pipeline-optimization-in-spark/data/:
+Produces, under the --data-root given:
     customers/       100K rows
-    sales_uniform/   5M rows, ~50 sales per customer
-    sales_skewed/    5M rows, customer 42 holds 40%
+    sales_uniform/   20M rows, ~200 sales per customer
+    sales_skewed/    20M rows, customer 42 holds 40% (~8M rows)
 
 Both fact tables have identical row counts, identical schemas, the same number
 of distinct join keys, and statistically identical values in every column
@@ -13,8 +13,8 @@ except `customer_id`. That last property is what makes the comparison valid,
 so the script verifies it rather than assuming it.
 
 Everything is generated in Spark from `spark.range`, never collected to the
-driver - generating 5 million rows in Python and calling createDataFrame would
-be far slower and would not scale.
+driver - generating 20 million rows in Python and calling createDataFrame
+would be far slower and would not scale.
 """
 
 import argparse
@@ -54,15 +54,15 @@ def build_sales(spark, workload: str) -> DataFrame:
     """Fact table. Identical across workloads except for `customer_id`."""
     df = spark.range(0, config.FACT_ROWS).withColumnRenamed("id", "sale_id")
 
-    # Even spread: 5,000,000 / 100,000 = exactly 50 sales per customer.
+    # Even spread: 20,000,000 / 100,000 = exactly 200 sales per customer.
     even_key = (F.col("sale_id") % config.DIM_ROWS) + 1
 
     if workload == "uniform":
         customer_id = even_key
     elif workload == "skewed":
         # 40% of rows to the hot customer; the rest keep the even spread.
-        # The hot customer also picks up its ~30 rows from the even spread,
-        # which is immaterial against 2,000,000.
+        # The hot customer also picks up its ~120 rows from the even spread,
+        # which is immaterial against ~8,000,000.
         customer_id = F.when(
             F.rand(config.SEEDS["skew_selector"]) < config.SKEW_FRACTION,
             F.lit(config.HOT_CUSTOMER_ID),

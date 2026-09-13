@@ -21,7 +21,10 @@ in the accompanying DZone article.
 
 ## Repository Structure
 
-- `config/` — frozen experimental configuration
+- `config/` — human-readable snapshot of the frozen configuration, recorded
+  from the executed runs. Nothing reads these files at runtime; the executable
+  values live in `scripts/config.py` and in `SPARK_PROPERTIES` inside
+  `scripts/submit_cloud.py`.
 - `scripts/` — experiment and analysis code
 - `results/` — experiment output used for the article
 
@@ -35,13 +38,20 @@ export GCS_BUCKET="<bucket>"
 export GCP_REGION="us-central1"
 ```
 
+Upload the experiment scripts to the bucket — the batches are submitted from
+there, so this must come first on a fresh bucket:
+
+```bash
+python scripts/submit_cloud.py --upload
+```
+
 Generate the datasets:
 
 ```bash
 python scripts/submit_cloud.py --generate --fact-rows 20000000
 ```
 
-Submit the benchmark:
+Submit the benchmark matrix:
 
 ```bash
 python scripts/submit_cloud.py

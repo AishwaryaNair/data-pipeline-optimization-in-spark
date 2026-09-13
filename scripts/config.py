@@ -1,4 +1,8 @@
-"""Single source of truth for every experiment parameter.
+"""Experiment parameters, read at runtime by the scripts in this directory.
+
+Together with SPARK_PROPERTIES in submit_cloud.py, this is what actually
+executes. config/experiment.json and config/spark.properties are read-only
+snapshots of the same values for a human; nothing loads them.
 
 Nothing else in this project hard-codes a size, seed, or path. Every number
 the article reports comes from here or from the measurements in results/.
@@ -48,9 +52,9 @@ WORKLOADS = ("uniform", "skewed")
 # One hot customer absorbs SKEW_FRACTION of all sales. Deliberately severe, so
 # the effect is unambiguous rather than arguable.
 #
-#   uniform : customer_id = (sale_id % 100_000) + 1  -> ~50 sales per customer
-#   skewed  : customer 42 gets 40% = 2,000,000 sales
-#             the other 60% spread over the remaining customers (~30 each)
+#   uniform : customer_id = (sale_id % 100_000) + 1  -> 200 sales per customer
+#   skewed  : customer 42 gets 40% = ~8,000,000 sales
+#             the other 60% spread over the remaining customers (~120 each)
 HOT_CUSTOMER_ID = 42
 SKEW_FRACTION = 0.40
 

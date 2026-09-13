@@ -157,9 +157,11 @@ def parse_run(eventlog_dir: Path) -> dict:
         # join, so exactly one stage should move a large share of the bytes. If
         # the query ran twice there are two such stages, and every *_total
         # below is a multiple of the true figure.
+        # Exactly one, not "at most one": zero heavy stages would mean the join
+        # never shuffled, which is as much a broken run as two executions.
         "sql_executions": sql_executions,
         "heavy_shuffle_stages": heavy_stages,
-        "single_execution": heavy_stages <= 1,
+        "single_execution": heavy_stages == 1,
         "num_tasks_total": len(tasks),
         "join_stage_id": int(join_stage_id),
         "join_stage_tasks": len(stage_tasks),
