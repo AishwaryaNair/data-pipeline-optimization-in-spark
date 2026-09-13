@@ -77,8 +77,15 @@ REQUIRED_APPLIED = {
     "spark.dynamicAllocation.enabled": "false",
     "spark.executor.instances": "2",
     "spark.executor.cores": "4",
+    "spark.executor.memory": "16g",
+    "spark.driver.cores": "4",
     "spark.sql.shuffle.partitions": "200",
 }
+
+# spark.driver.memory is submitted but deliberately absent above: it is not
+# among the properties `gcloud dataproc batches describe` was observed to
+# return, and a guard that always fails is worse than no guard. Add it once
+# it is confirmed present in a describe response.
 
 
 def _prop(props: dict, name: str):

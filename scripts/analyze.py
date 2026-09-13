@@ -125,8 +125,8 @@ def main() -> int:
 
     # Correctness must survive into the CSV as scalars. An earlier version
     # dropped dict-valued columns when flattening, which silently discarded the
-    # result checksum - so the report could not show that salting preserved the
-    # answer, the single most important validity claim in the experiment.
+    # validation summary - so the report could not show that salting preserved
+    # the totals, the single most important validity claim in the experiment.
     expected = None
     flat = []
     for r in records:

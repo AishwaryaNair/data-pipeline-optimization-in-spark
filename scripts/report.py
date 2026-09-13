@@ -1,6 +1,7 @@
 """Turn the raw run records into the article's evidence.
 
-    python report.py --bucket BUCKET
+    python report.py
+    python report.py --csv results/benchmark_raw.csv
 
 Deliberately reports distributions, not single numbers. The whole point of the
 experiment is that a before/after pair cannot distinguish a real effect from
@@ -93,7 +94,9 @@ def main() -> int:
             print(f"{'':<12s}  -> {note}")
 
     # --- structural metrics -----------------------------------------------
-    print("\nSTRUCTURAL METRICS (medians) - deterministic, unlike wall time")
+    # Not all of these are deterministic: the byte-based rows repeat exactly
+    # across repetitions, while the time-based rows and executor CPU vary.
+    print("\nSTRUCTURAL AND WORK METRICS (medians)")
     keys = [
         ("shuffle max/p50 (bytes)", "_byte_ratio", 1.0, "{:>13.2f}"),
         ("largest task read (MB)", "shuffle_read_max_bytes_task", 1e6, "{:>13.2f}"),
@@ -125,7 +128,7 @@ def main() -> int:
         print(f"  transaction_count = {vals} "
               f"{'in every run' if len(txns) == 1 else '<- DIFFERS, investigate'}")
     if checksums:
-        print(f"  result checksum = {'identical across all variants' if len(checksums) == 1 else 'DIFFERS: ' + str(checksums)}")
+        print(f"  validation-summary checksum = {'identical across all variants' if len(checksums) == 1 else 'DIFFERS: ' + str(checksums)}")
         print(f"    {next(iter(checksums))}")
 
     bad = [r["run_id"] for r in rows if str(r.get("single_execution")).lower() == "false"]

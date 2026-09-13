@@ -150,19 +150,17 @@ def parse_run(eventlog_dir: Path) -> dict:
         # Metric scope, stated explicitly so the article never mixes them:
         #   *_total            summed over EVERY task in the application
         #   task_ms_*, *_task  the join stage only (largest shuffle read)
-        # Guard against the benchmark query executing more than once.
+        # SQLExecutionStart is not used as the duplicate-benchmark guard
+        # because Spark records SQL execution contexts for work outside the
+        # measured heavy query as well. The recorded runs contain two SQL
+        # execution starts even though there is exactly one heavy benchmark
+        # execution.
         #
-        # Counting SQLExecutionStart events is not a usable signal, because a
-        # correct run contains non-benchmark executions too: Parquet
-        # schema/footer reading and the small post-measurement write that
-        # persists the run record both register their own. Every recorded run
-        # reports sql_executions = 2 for this reason.
-        #
-        # Counting heavy shuffle stages is reliable instead - the query has one
-        # join, so exactly one stage should move a large share of the bytes.
-        # The metadata write is far too small to qualify. If the benchmark
-        # query ran twice there would be two such stages, and every *_total
-        # below would be a multiple of the true figure.
+        # Counting heavy shuffle stages is the authoritative guard instead -
+        # the query has one join, so exactly one stage should move a large
+        # share of the bytes. If the benchmark query ran twice there would be
+        # two such stages, and every *_total below would be a multiple of the
+        # true figure.
         # A single *heavy benchmark* execution - not a claim that the
         # application contained only one Spark action. Exactly one, not "at
         # most one": zero heavy stages would mean the join never shuffled,
