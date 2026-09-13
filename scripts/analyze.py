@@ -136,13 +136,19 @@ def main() -> int:
             row["result_groups"] = ck.get("groups")
             row["result_transaction_count"] = ck.get("total_transactions")
             row["result_total_sales"] = ck.get("total_sales")
-            # Deterministic: sorted keys, stable separators, so the same result
-            # always hashes identically regardless of dict ordering.
+            # A validation-SUMMARY checksum: a hash of {groups,
+            # total_transactions, total_sales}, not of the 12 output rows. It
+            # catches a changed total, not a redistribution between groups
+            # that preserves the totals. The column keeps its historical name.
+            #
+            # Deterministic: sorted keys, stable separators, so the same
+            # summary always hashes identically regardless of dict ordering.
             row["result_checksum"] = hashlib.sha256(
                 json.dumps(ck, sort_keys=True, separators=(",", ":")).encode()
             ).hexdigest()[:16]
             if expected is None:
                 expected = row["result_checksum"]
+            # True means "agrees with the first run's validation summary".
             row["correctness_verified"] = row["result_checksum"] == expected
         flat.append(row)
     fields: list[str] = []

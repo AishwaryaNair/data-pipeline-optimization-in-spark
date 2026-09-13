@@ -150,15 +150,23 @@ def parse_run(eventlog_dir: Path) -> dict:
         # Metric scope, stated explicitly so the article never mixes them:
         #   *_total            summed over EVERY task in the application
         #   task_ms_*, *_task  the join stage only (largest shuffle read)
-        # Duplicate-execution guard. Counting SQLExecutionStart events is not a
-        # usable signal: spark.read.parquet() registers one of its own for
-        # schema/footer reading, so a correct single-action job still reports
-        # two. Counting heavy shuffle stages is reliable - the query has one
-        # join, so exactly one stage should move a large share of the bytes. If
-        # the query ran twice there are two such stages, and every *_total
-        # below is a multiple of the true figure.
-        # Exactly one, not "at most one": zero heavy stages would mean the join
-        # never shuffled, which is as much a broken run as two executions.
+        # Guard against the benchmark query executing more than once.
+        #
+        # Counting SQLExecutionStart events is not a usable signal, because a
+        # correct run contains non-benchmark executions too: Parquet
+        # schema/footer reading and the small post-measurement write that
+        # persists the run record both register their own. Every recorded run
+        # reports sql_executions = 2 for this reason.
+        #
+        # Counting heavy shuffle stages is reliable instead - the query has one
+        # join, so exactly one stage should move a large share of the bytes.
+        # The metadata write is far too small to qualify. If the benchmark
+        # query ran twice there would be two such stages, and every *_total
+        # below would be a multiple of the true figure.
+        # A single *heavy benchmark* execution - not a claim that the
+        # application contained only one Spark action. Exactly one, not "at
+        # most one": zero heavy stages would mean the join never shuffled,
+        # which is as much a broken run as two executions.
         "sql_executions": sql_executions,
         "heavy_shuffle_stages": heavy_stages,
         "single_execution": heavy_stages == 1,
@@ -177,7 +185,9 @@ def parse_run(eventlog_dir: Path) -> dict:
         "shuffle_write_bytes_total": int(totals("shuffle_write_bytes")),
         "memory_spill_bytes_total": int(totals("memory_spill_bytes")),
         "disk_spill_bytes_total": int(totals("disk_spill_bytes")),
-        # Compute-work proxy. NOT a dollar figure: these runs are local.
+        # Aggregate executor CPU time: a compute-work metric, not a dollar-cost
+        # metric. Cloud billing includes additional resource dimensions and
+        # should not be inferred directly from this value.
         "executor_run_time_ms_total": int(totals("run_time_ms")),
         "executor_cpu_time_ms_total": int(totals("cpu_time_ms")),
         "gc_time_ms_total": int(totals("gc_time_ms")),

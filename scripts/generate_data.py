@@ -114,7 +114,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--data-root",
-        help="Local directory or gs:// URI. Defaults to the local dev path.",
+        required=True,
+        help="gs:// URI to write the datasets under. No default.",
     )
     ap.add_argument("--fact-rows", type=int, default=config.FACT_ROWS)
     args = ap.parse_args()

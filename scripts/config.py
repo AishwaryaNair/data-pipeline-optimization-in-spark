@@ -120,8 +120,10 @@ WARMUP_RUNS = 1
 MEASURED_RUNS = 5
 
 # --- Determinism ------------------------------------------------------------
-# Same seed + same partition count reproduces the data byte-for-byte, which is
-# why 500MB of Parquet never needs to enter git.
+# Fixed seeds make the generated values reproducible under the frozen
+# experiment configuration, which is why the Parquet never needs to enter git.
+# This is value-level reproducibility, not a claim that the Parquet files are
+# byte-identical across runtime versions or writer settings.
 SEEDS = {
     "skew_selector": 17,
     "amount": 31,

@@ -40,9 +40,11 @@ def main() -> int:
     ap.add_argument("--rep", type=int, default=0)
     ap.add_argument("--block", type=int, default=0)
     ap.add_argument("--warmup", action="store_true")
-    ap.add_argument("--data-root")
-    ap.add_argument("--results-root")
-    ap.add_argument("--eventlog-root")
+    # Required: there is no default root, and an unset one would silently
+    # resolve to paths like "/sales_uniform".
+    ap.add_argument("--data-root", required=True, help="gs:// URI holding the datasets")
+    ap.add_argument("--results-root", required=True, help="gs:// URI for run records")
+    ap.add_argument("--eventlog-root", required=True, help="gs:// URI for event logs")
     args = ap.parse_args()
 
     config.set_roots(
@@ -76,16 +78,21 @@ def main() -> int:
         spark.stop()
         return 2
 
-    # EXACTLY ONE action. An earlier version timed a noop write and then called
-    # collect() for a correctness checksum - which re-executed the whole query,
-    # so the event log contained two executions and every summed metric
-    # (shuffle bytes, executor CPU) came out doubled. Wall time was unaffected,
-    # which is what made it easy to miss.
+    # EXACTLY ONE measured benchmark action. A small post-measurement Spark
+    # write persists the run metadata further down; it happens after wall_s is
+    # recorded and is far too small to register as a heavy shuffle stage, but
+    # it does contribute to the application-wide *_total metrics.
+    #
+    # An earlier version timed a noop write and then called collect() for the
+    # validation summary - which re-executed the whole query, so the event log
+    # contained two heavy executions and every summed metric (shuffle bytes,
+    # executor CPU) came out doubled. Wall time was unaffected, which is what
+    # made it easy to miss.
     #
     # collect() is safe as the timed action here because the result is 12 rows
     # (4 regions x 3 segments): no meaningful driver transfer, and unlike
     # count() it cannot be satisfied by a cheaper plan. One execution, one
-    # timing, and the checksum falls out of the same action.
+    # timing, and the validation summary falls out of the same action.
     t0 = time.perf_counter()
     result = df.collect()
     wall_s = time.perf_counter() - t0
@@ -94,12 +101,16 @@ def main() -> int:
         (r["region"], r["segment"], r["transaction_count"], float(r["total_sales"]))
         for r in result
     )
+    # Validation SUMMARY, not a hash of the full result. It aggregates the 12
+    # output rows, so it detects a changed total but not a redistribution
+    # between groups that preserves the totals. analyze.py hashes this summary
+    # and stores it as result_checksum.
     checksum = {
         "groups": len(rows),
         "total_transactions": sum(r[2] for r in rows),
         "total_sales": round(sum(r[3] for r in rows), 2),
     }
-    print(f"  result: {checksum}")
+    print(f"  validation summary: {checksum}")
 
     conf = spark.sparkContext.getConf()
     record = {
